@@ -55,6 +55,10 @@ val removeDevMixinAnyway = System.getenv("REMOVE_DEV_MIXIN_ANYWAY")?.toBoolean()
 val gitHash = "\"${calculateGitHash() + (if (hasUnstaged()) "-modified" else "")}\""
 
 extra["gitHash"] = gitHash
+extra["parchment_version"] = "v2024.11.17"
+extra["minecraft_version"] = "1.21.1" // Replace with the actual Minecraft version
+extra["mod_version"] = "0.1.0" // Replace with the actual mod version
+extra["fabric_loader_version"] = "0.16.9" // Replace with the actual Fabric loader version
 
 architectury {
     minecraft = "minecraft_version"()
