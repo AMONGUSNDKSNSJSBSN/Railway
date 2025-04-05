@@ -7,11 +7,10 @@ pluginManagement {
         maven { url = uri("https://maven.architectury.dev/") }
         maven { url = uri("https://maven.quiltmc.org/repository/release") }
         maven {
-            url = uri("https://maven.parchmentmc.org")
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
+            url = uri("https://maven.parchmentmc.org")        
+            name = "ParchmentMC"
+            url = "https://maven.parchmentmc.org/"
+        
         }
     }
 }
