@@ -2,7 +2,6 @@ plugins {
     java
     `maven-publish`
     id("architectury-plugin") version "3.4-SNAPSHOT"
-    id("dev.architectury.loom") version "1.7.+" apply false
     id("me.modmuss50.mod-publish-plugin") version "0.7.4" apply false
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
     id("dev.ithundxr.silk") version "0.11.15"
@@ -21,13 +20,11 @@ extra["gitHash"] = gitHash
 extra["parchment_version"] = "v2024.11.17" // Replace with the correct version if different
 extra["minecraft_version"] = "1.21.1" // Replace with the actual Minecraft version
 extra["mod_version"] = "1.0.0" // Replace with the actual mod version
-extra["fabric_loader_version"] = "0.14.0" // Replace with the actual Fabric loader version
 
 repositories {
     mavenLocal()
     gradlePluginPortal()
     maven { url = uri("https://maven.neoforged.net/releases") }
-    maven { url = uri("https://maven.fabricmc.net/") }
     maven { url = uri("https://maven.architectury.dev/") }
     maven { url = uri("https://maven.quiltmc.org/repository/release") }
     maven {
@@ -77,7 +74,7 @@ subprojects {
 
     configurations.configureEach {
         resolutionStrategy {
-            force("net.fabricmc:fabric-loader:${"fabric_loader_version"()}")
+            // Remove Fabric loader force
         }
     }
 
@@ -278,10 +275,10 @@ fun <T> getValueFromAnnotation(annotation: AnnotationNode?, key: String): T? {
 tasks.create("railwaysPublish") {
     when (val platform = System.getenv("PLATFORM")) {
         "both" -> {
-            dependsOn(tasks.build, ":fabric:publish", ":forge:publish", ":common:publish", ":fabric:publishMods", ":forge:publishMods")
+            dependsOn(tasks.build, ":forge:publish", ":common:publish", ":forge:publishMods")
         }
-        "fabric", "forge" -> {
-            dependsOn("${platform}:build", "${platform}:publish", "${platform}:publishMods")
+        "forge" -> {
+            dependsOn("forge:build", "forge:publish", "forge:publishMods")
         }
     }
 }
