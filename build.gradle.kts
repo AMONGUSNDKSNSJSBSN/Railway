@@ -383,6 +383,14 @@ fun Project.setupRepositories() {
                 includeGroupByRegex("com.github.*")
             }
         }
+        maven {
+            url = uri("https://maven.parchmentmc.org")
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+        }
+    
     }
 }
 
