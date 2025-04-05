@@ -6,7 +6,13 @@ pluginManagement {
         maven { url = uri("https://maven.fabricmc.net/") }
         maven { url = uri("https://maven.architectury.dev/") }
         maven { url = uri("https://maven.quiltmc.org/repository/release") }
-        gradlePluginPortal()
+        maven {
+            url = uri("https://maven.parchmentmc.org")
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+        }
     }
 }
 
