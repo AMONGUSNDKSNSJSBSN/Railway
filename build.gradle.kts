@@ -1,3 +1,19 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.architectury.loom.api.LoomGradleExtensionAPI
+import dev.architectury.loom.api.mappings.layered.spec.LayeredMappingSpecBuilder
+import java.util.zip.Deflater
+import org.gradle.api.tasks.bundling.Jar
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
 plugins {
     java
     `maven-publish`
@@ -352,7 +368,7 @@ fun hasUnstaged(): Boolean {
             standardOutput = stdout
         }
         val result = stdout.toString().replace(Regex("M gradlew(\\.bat)?"), "").trimEnd()
-        if (result.isNotEmpty()) println("Found stageable results:\n${result}\n")
+        if (result isNotEmpty()) println("Found stageable results:\n${result}\n")
         result.isNotEmpty()
     } catch (ignored: Throwable) {
         false
