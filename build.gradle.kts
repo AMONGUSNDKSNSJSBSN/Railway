@@ -127,6 +127,10 @@ subprojects {
             officialMojangMappings { nameSyntheticMembers = false }
             parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
         })
+        "mappings"(loom.layered {
+            officialMojangMappings { nameSyntheticMembers = false }
+            parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
+        })
 
         // Used to decompile mixin dumps, needs to be on the classpath
         // Uncomment if you want it to decompile mixin exports, beware it has very verbose logging.
