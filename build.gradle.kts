@@ -1,50 +1,13 @@
-/*
- * Steam 'n' Rails
- * Copyright (c) 2022-2024 The Railways Team
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
-
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import dev.architectury.plugin.ArchitectPluginExtension
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-import net.fabricmc.loom.api.LoomGradleExtensionAPI
-import net.fabricmc.loom.task.RemapJarTask
-import org.gradle.configurationcache.extensions.capitalized
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodNode
-import java.io.ByteArrayOutputStream
-import java.util.*
-import java.util.jar.JarEntry
-import java.util.jar.JarFile
-import java.util.jar.JarOutputStream
-import java.util.zip.Deflater
-
 plugins {
     java
     `maven-publish`
     id("architectury-plugin") version "3.4-SNAPSHOT"
     id("dev.architectury.loom") version "1.7.+" apply false
-    id("me.modmuss50.mod-publish-plugin") version "0.7.4" apply false // https://github.com/modmuss50/mod-publish-plugin
+    id("me.modmuss50.mod-publish-plugin") version "0.7.4" apply false
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
-    id("dev.ithundxr.silk") version "0.11.15" // https://github.com/IThundxr/silk
-    id("net.kyori.blossom") version "2.1.0" apply false // https://github.com/KyoriPowered/blossom
-    id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.8" // https://github.com/JetBrains/gradle-idea-ext-plugin
+    id("dev.ithundxr.silk") version "0.11.15"
+    id("net.kyori.blossom") version "2.1.0" apply false
+    id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.8"
 }
 
 println("Steam 'n' Rails v${"mod_version"()}")
@@ -55,42 +18,41 @@ val removeDevMixinAnyway = System.getenv("REMOVE_DEV_MIXIN_ANYWAY")?.toBoolean()
 val gitHash = "\"${calculateGitHash() + (if (hasUnstaged()) "-modified" else "")}\""
 
 extra["gitHash"] = gitHash
-extra["parchment_version"] = "v2024.11.13"
+extra["parchment_version"] = "v2024.11.17" // Replace with the correct version if different
 extra["minecraft_version"] = "1.21.1" // Replace with the actual Minecraft version
-extra["mod_version"] = "0.1.0" // Replace with the actual mod version
-extra["fabric_loader_version"] = "0.16.9" // Replace with the actual Fabric loader version
+extra["mod_version"] = "1.0.0" // Replace with the actual mod version
+extra["fabric_loader_version"] = "0.14.0" // Replace with the actual Fabric loader version
 
-architectury {
-    minecraft = "minecraft_version"()
+repositories {
+    mavenLocal()
+    gradlePluginPortal()
+    maven { url = uri("https://maven.neoforged.net/releases") }
+    maven { url = uri("https://maven.fabricmc.net/") }
+    maven { url = uri("https://maven.architectury.dev/") }
+    maven { url = uri("https://maven.quiltmc.org/repository/release") }
+    maven {
+        url = uri("https://maven.parchmentmc.org")
+        metadataSources {
+            mavenPom()
+            artifact()
+        }
+    }
 }
 
-allprojects {
-    apply(plugin = "java")
-    apply(plugin = "architectury-plugin")
-    apply(plugin = "maven-publish")
+dependencies {
+    "minecraft"("com.mojang:minecraft:${"minecraft_version"()}")
+    "mappings"(loom.layered {
+        officialMojangMappings { nameSyntheticMembers = false }
+        parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
+    })
+}
 
-    base.archivesName.set("archives_base_name"())
-    group = "maven_group"()
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
 
-    // Formats the mod version to include the loader, Minecraft version, and build number (if present)
-    // example: 1.0.0+fabric-1.19.2-build.100 (or -local)
-    val build = buildNumber?.let { "-build.${it}" } ?: "-local"
-
-    var gitBranchLabel = "";
-    if ("mod_version"().endsWith("-alpha")) {
-        // gitBranchLabel should be "-" + the current git branch (replacing any slashes with underscores)
-        gitBranchLabel = "-" + calculateGitBranch().replace("/", "_")
-    }
-
-    version = "${"mod_version"()}${gitBranchLabel}+${project.name}-mc${"minecraft_version"() + if (isRelease) "" else build}"
-
-    tasks.withType<JavaCompile>().configureEach {
-        options.encoding = "UTF-8"
-    }
-
-    java {
-        withSourcesJar()
-    }
+java {
+    withSourcesJar()
 }
 
 subprojects {
@@ -119,23 +81,12 @@ subprojects {
         }
     }
 
-    @Suppress("UnstableApiUsage")
     dependencies {
         "minecraft"("com.mojang:minecraft:${"minecraft_version"()}")
-        // layered s - Mojmap names, parchment docs and parameters
-        "s"(loom.layered {
-            officialMojangs { nameSyntheticMembers = false }
-            parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
-        })
         "mappings"(loom.layered {
             officialMojangMappings { nameSyntheticMembers = false }
-            
-            mappings "org.parchmentmc.data:parchment-1.21.1:2024.06.30"
+            parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
         })
-
-        // Used to decompile mixin dumps, needs to be on the classpath
-        // Uncomment if you want it to decompile mixin exports, beware it has very verbose logging.
-        //implementation("org.vineflower:vineflower:1.10.0")
     }
 
     publishing {
@@ -161,8 +112,7 @@ subprojects {
         }
     }
 
-    // from here down is platform configuration
-    if(project.path == ":common") {
+    if (project.path == ":common") {
         return@subprojects
     }
 
@@ -208,24 +158,19 @@ subprojects {
     }
 
     tasks.processResources {
-        // include packs
         from(project(":common").file("src/main/resources")) {
             include("resourcepacks/")
         }
 
-        // Trim -build.X+mcX.XX.X from version string
-        //val createFabricVersion: String = Regex("(\\d+\\.\\d+\\.\\d+-\\w)").find("create_fabric_version"())?.value.toString()
-
-        // set up properties for filling into metadata
         val properties = mapOf(
-                "version" to version,
-                "minecraft_version" to "minecraft_version"(),
-                "fabric_api_version" to "fabric_api_version"(),
-                "fabric_loader_version" to "fabric_loader_version"(),
-                "voicechat_api_version" to "voicechat_api_version"(),
-                "forge_version" to "forge_version"().split(".")[0], // only specify major version of forge
-                "create_forge_version" to "create_forge_version"().split("-")[0],
-                "create_fabric_version" to "create_fabric_version"()
+            "version" to version,
+            "minecraft_version" to "minecraft_version"(),
+            "fabric_api_version" to "fabric_api_version"(),
+            "fabric_loader_version" to "fabric_loader_version"(),
+            "voicechat_api_version" to "voicechat_api_version"(),
+            "forge_version" to "forge_version"().split(".")[0],
+            "create_forge_version" to "create_forge_version"().split("-")[0],
+            "create_fabric_version" to "create_fabric_version"()
         )
 
         inputs.properties(properties)
@@ -274,18 +219,18 @@ fun transformJar(jar: File) {
 
     JarOutputStream(jar.outputStream()).use { out ->
         out.setLevel(Deflater.BEST_COMPRESSION)
-        contents.forEach { var (name, data) = it
-            if(name.startsWith("architectury_inject_${project.name}_common"))
+        contents.forEach { (name, data) ->
+            if (name.startsWith("architectury_inject_${project.name}_common"))
                 return@forEach
 
-            if (name.endsWith(".json") || name.endsWith(".mcmeta")) {
-                data = (JsonOutput.toJson(JsonSlurper().parse(data)).toByteArray())
-            } else if (name.endsWith(".class")) {
-                data = transformClass(data)
+            val processedData = when {
+                name.endsWith(".json") || name.endsWith(".mcmeta") -> JsonOutput.toJson(JsonSlurper().parse(data)).toByteArray()
+                name.endsWith(".class") -> transformClass(data)
+                else -> data
             }
 
             out.putNextEntry(JarEntry(name))
-            out.write(data)
+            out.write(processedData)
             out.closeEntry()
         }
         out.finish()
@@ -297,24 +242,18 @@ fun transformClass(bytes: ByteArray): ByteArray {
     val node = ClassNode()
     ClassReader(bytes).accept(node, 0)
 
-    // Remove Methods & Field Annotated with @DevEnvMixin
     node.methods.removeIf { methodNode: MethodNode -> removeIfDevMixin(node.name, methodNode.visibleAnnotations) }
-    // Disabled as I don't feel ok with people being able to remove these
-    //node.fields.removeIf { fieldNode: FieldNode -> removeIfDevMixin(fieldNode.visibleAnnotations) }
 
     return ClassWriter(0).also { node.accept(it) }.toByteArray()
 }
 
 fun removeIfDevMixin(nodeName: String, visibleAnnotations: List<AnnotationNode>?): Boolean {
-    // Don't remove methods if it's not a GHA build/Release build
     if (!removeDevMixinAnyway && buildNumber == null && !nodeName.lowercase(Locale.ROOT).matches(Regex(".*\\/mixin\\/.*Mixin")))
         return false
 
-    if (visibleAnnotations != null) {
-        for (annotationNode in visibleAnnotations) {
-            if (annotationNode.desc == "Lcom/railwayteam/railways/annotation/mixin/DevEnvMixin;")
-                return true
-        }
+    visibleAnnotations?.forEach { annotationNode ->
+        if (annotationNode.desc == "Lcom/railwayteam/railways/annotation/mixin/DevEnvMixin;")
+            return true
     }
 
     return false
@@ -323,12 +262,7 @@ fun removeIfDevMixin(nodeName: String, visibleAnnotations: List<AnnotationNode>?
 fun <T> getValueFromAnnotation(annotation: AnnotationNode?, key: String): T? {
     var getNextValue = false
 
-    if (annotation?.values == null) {
-        return null
-    }
-
-    // Keys and value are stored in successive pairs, search for the key and if found return the following entry
-    for (value in annotation.values) {
+    annotation?.values?.forEach { value ->
         if (getNextValue) {
             @Suppress("UNCHECKED_CAST")
             return value as T
@@ -355,78 +289,76 @@ tasks.create("railwaysPublish") {
 fun Project.setupRepositories() {
     repositories {
         mavenCentral()
-        maven("https://maven.shedaniel.me/") // Cloth Config, REI
-        maven("https://maven.blamejared.com/") // JEI, Hex Casting
-        exclusiveMaven("https://maven.parchmentmc.org", "org.parchmentmc.data") // Parchment mappings
-        exclusiveMaven("https://maven.quiltmc.org/repository/release", "org.quiltmc") // Quilt Mappings
-        maven("https://jm.gserv.me/repository/maven-public/") // JourneyMap API
-        exclusiveMaven("https://api.modrinth.com/maven", "maven.modrinth") // LazyDFU, JourneyMap
+        maven("https://maven.shedaniel.me/")
+        maven("https://maven.blamejared.com/")
+        exclusiveMaven("https://maven.parchmentmc.org", "org.parchmentmc.data")
+        exclusiveMaven("https://maven.quiltmc.org/repository/release", "org.quiltmc")
+        maven("https://jm.gserv.me/repository/maven-public/")
+        exclusiveMaven("https://api.modrinth.com/maven", "maven.modrinth")
         exclusiveMaven("https://cursemaven.com", "curse.maven")
-        maven("https://maven.theillusivec4.top/") // Curios
-        maven("https://maven.tterrag.com/") { // Flywheel, Registrate, Create
+        maven("https://maven.theillusivec4.top/")
+        maven("https://maven.tterrag.com/") {
             content {
                 includeGroup("com.simibubi.create")
                 includeGroup("com.tterrag.registrate")
                 includeGroup("com.jozufozu.flywheel")
             }
         }
-        maven("https://maven.maxhenkel.de/repository/public") // Simple Voice Chat
-        maven("https://maven.jamieswhiteshirt.com/libs-release") // Reach Entity Attributes
-        exclusiveMaven("https://thedarkcolour.github.io/KotlinForForge/", "thedarkcolour") // KFF (Hex Casting dependency)
-        maven("https://maven.terraformersmc.com/releases/") // Mod Menu, EMI
-        maven("https://mvn.devos.one/snapshots/") // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
-        maven("https://mvn.devos.one/releases/") // Porting Lib
-        maven("https://maven.cafeteria.dev/releases") // Fake Player API
-        maven("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/") // forge config api port
-        exclusiveMaven("https://maven.ladysnake.org/releases", "dev.onyxstudios.cardinal-components-api") // Cardinal Components (Hex Casting dependency)
-        maven("https://jitpack.io/") { // Mixin Extras, Fabric ASM
+        maven("https://maven.maxhenkel.de/repository/public")
+        maven("https://maven.jamieswhiteshirt.com/libs-release")
+        exclusiveMaven("https://thedarkcolour.github.io/KotlinForForge/", "thedarkcolour")
+        maven("https://maven.terraformersmc.com/releases/")
+        maven("https://mvn.devos.one/snapshots/")
+        maven("https://mvn.devos.one/releases/")
+        maven("https://maven.cafeteria.dev/releases")
+        maven("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/")
+        exclusiveMaven("https://maven.ladysnake.org/releases", "dev.onyxstudios.cardinal-components-api")
+        maven("https://jitpack.io/") {
             content {
                 includeGroupByRegex("com.github.*")
             }
         }
-    
     }
 }
 
 fun calculateGitHash(): String {
-    try {
+    return try {
         val stdout = ByteArrayOutputStream()
         exec {
             commandLine("git", "rev-parse", "HEAD")
             standardOutput = stdout
         }
-        return stdout.toString().trim()
-    } catch(ignored: Throwable) {
-        return "unknown"
+        stdout.toString().trim()
+    } catch (ignored: Throwable) {
+        "unknown"
     }
 }
 
 fun calculateGitBranch(): String {
-    try {
+    return try {
         val stdout = ByteArrayOutputStream()
         exec {
             commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
             standardOutput = stdout
         }
-        return stdout.toString().trim()
-    } catch(ignored: Throwable) {
-        return "unknown"
+        stdout.toString().trim()
+    } catch (ignored: Throwable) {
+        "unknown"
     }
 }
 
 fun hasUnstaged(): Boolean {
-    try {
+    return try {
         val stdout = ByteArrayOutputStream()
         exec {
             commandLine("git", "status", "--porcelain")
             standardOutput = stdout
         }
         val result = stdout.toString().replace(Regex("M gradlew(\\.bat)?"), "").trimEnd()
-        if (result.isNotEmpty())
-            println("Found stageable results:\n${result}\n")
-        return result.isNotEmpty()
-    }  catch(ignored: Throwable) {
-        return false
+        if (result.isNotEmpty()) println("Found stageable results:\n${result}\n")
+        result.isNotEmpty()
+    } catch (ignored: Throwable) {
+        false
     }
 }
 
@@ -449,4 +381,3 @@ operator fun String.invoke(): String {
     return rootProject.ext[this] as? String
         ?: throw IllegalStateException("Property $this is not defined")
 }
-
