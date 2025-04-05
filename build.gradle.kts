@@ -122,14 +122,15 @@ subprojects {
     @Suppress("UnstableApiUsage")
     dependencies {
         "minecraft"("com.mojang:minecraft:${"minecraft_version"()}")
-        // layered mappings - Mojmap names, parchment docs and parameters
-        "mappings"(loom.layered {
-            officialMojangMappings { nameSyntheticMembers = false }
+        // layered s - Mojmap names, parchment docs and parameters
+        "s"(loom.layered {
+            officialMojangs { nameSyntheticMembers = false }
             parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
         })
         "mappings"(loom.layered {
             officialMojangMappings { nameSyntheticMembers = false }
-            parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
+            
+            mappings "org.parchmentmc.data:parchment-1.21.1:2024.06.30"
         })
 
         // Used to decompile mixin dumps, needs to be on the classpath
