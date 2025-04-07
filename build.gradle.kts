@@ -17,6 +17,7 @@ import groovy.json.JsonSlurper
 import dev.architectury.loom.api.LoomGradleExtensionAPI
 import dev.architectury.loom.api.mappings.layered.spec.LayeredMappingSpecBuilder
 import dev.architectury.plugin.ArchitectPluginExtension
+import java.util.Locale
 
 plugins {
     java
@@ -372,7 +373,7 @@ fun hasUnstaged(): Boolean {
             standardOutput = stdout
         }
         val result = stdout.toString().replace(Regex("M gradlew(\\.bat)?"), "").trimEnd()
-        if (result isNotEmpty()) println("Found stageable results:\n${result}\n")
+        if (result.isNotEmpty()) println("Found stageable results:\n${result}\n")
         result.isNotEmpty()
     } catch (ignored: Throwable) {
         false
