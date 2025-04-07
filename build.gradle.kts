@@ -14,6 +14,8 @@ import java.util.jar.JarOutputStream
 import java.io.ByteArrayOutputStream
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import dev.architectury.loom.api.LoomGradleExtensionAPI
+import dev.architectury.loom.api.mappings.layered.spec.LayeredMappingSpecBuilder
 
 plugins {
     java
