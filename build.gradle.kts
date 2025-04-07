@@ -16,6 +16,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import dev.architectury.loom.api.LoomGradleExtensionAPI
 import dev.architectury.loom.api.mappings.layered.spec.LayeredMappingSpecBuilder
+import dev.architectury.plugin.ArchitectPluginExtension
 
 plugins {
     java
@@ -381,6 +382,8 @@ fun hasUnstaged(): Boolean {
 fun Project.architectury(action: Action<ArchitectPluginExtension>) {
     action.execute(this.extensions.getByType<ArchitectPluginExtension>())
 }
+
+
 
 fun RepositoryHandler.exclusiveMaven(url: String, vararg groups: String) {
     exclusiveContent {
