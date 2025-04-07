@@ -1,21 +1,3 @@
-/*
- * Steam 'n' Rails
- * Copyright (c) 2022-2024 The Railways Team
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
-
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.architectury.plugin.ArchitectPluginExtension
 import groovy.json.JsonOutput
@@ -57,7 +39,7 @@ val gitHash = "\"${calculateGitHash() + (if (hasUnstaged()) "-modified" else "")
 extra["gitHash"] = gitHash
 
 architectury {
-    minecraft = "minecraft_version"()
+    minecraft = "1.21.1"
 }
 
 allprojects {
@@ -72,13 +54,13 @@ allprojects {
     // example: 1.0.0+fabric-1.19.2-build.100 (or -local)
     val build = buildNumber?.let { "-build.${it}" } ?: "-local"
 
-    var gitBranchLabel = "";
+    var gitBranchLabel = ""
     if ("mod_version"().endsWith("-alpha")) {
         // gitBranchLabel should be "-" + the current git branch (replacing any slashes with underscores)
         gitBranchLabel = "-" + calculateGitBranch().replace("/", "_")
     }
 
-    version = "${"mod_version"()}${gitBranchLabel}+${project.name}-mc${"minecraft_version"() + if (isRelease) "" else build}"
+    version = "${"mod_version"()}${gitBranchLabel}+${project.name}-mc1.21.1${if (isRelease) "" else build}"
 
     tasks.withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
@@ -117,11 +99,11 @@ subprojects {
 
     @Suppress("UnstableApiUsage")
     dependencies {
-        "minecraft"("com.mojang:minecraft:${"minecraft_version"()}")
+        "minecraft"("com.mojang:minecraft:1.21.1")
         // layered mappings - Mojmap names, parchment docs and parameters
         "mappings"(loom.layered {
             officialMojangMappings { nameSyntheticMembers = false }
-            parchment("org.parchmentmc.data:parchment-${"minecraft_version"()}:${"parchment_version"()}@zip")
+            parchment("org.parchmentmc.data:parchment-1.21.1:${"parchment_version"()}@zip")
         })
 
         // Used to decompile mixin dumps, needs to be on the classpath
@@ -132,7 +114,7 @@ subprojects {
     publishing {
         publications {
             create<MavenPublication>("maven${capitalizedName}") {
-                artifactId = "${"archives_base_name"()}-${project.name}-${"minecraft_version"()}"
+                artifactId = "${"archives_base_name"()}-${project.name}-1.21.1"
                 from(components["java"])
             }
         }
@@ -210,7 +192,7 @@ subprojects {
         // set up properties for filling into metadata
         val properties = mapOf(
                 "version" to version,
-                "minecraft_version" to "minecraft_version"(),
+                "minecraft_version" to "1.21.1",
                 "fabric_api_version" to "fabric_api_version"(),
                 "fabric_loader_version" to "fabric_loader_version"(),
                 "voicechat_api_version" to "voicechat_api_version"(),
@@ -439,4 +421,3 @@ operator fun String.invoke(): String {
     return rootProject.ext[this] as? String
         ?: throw IllegalStateException("Property $this is not defined")
 }
-
