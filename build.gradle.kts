@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.MethodNode
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
+import java.io.ByteArrayOutputStream
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
